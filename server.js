@@ -102,11 +102,11 @@ async function loadDocuments() {
           });
         });
       }
-*/
+
     } catch (err) {
       console.error(`Error reading ${file}:`, err);
     }
-  }
+  }*/
 
   console.log(`Loaded ${documents.length} documents`);
   return documents;
@@ -209,7 +209,7 @@ app.post('/generate', async (req, res) => {
     console.log(`Retrieved top ${topDocuments.length} documents.`);
 
     const response = await cohere.chat({
-      model: 'command-r-plus',
+      model: 'command-a-03-2025',
       message: prompt,
       documents: topDocuments.map(doc => ({
         text: `${doc.data.title}. ${doc.data.snippet}`
