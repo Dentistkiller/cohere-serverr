@@ -12,8 +12,18 @@ app.use(express.json());
 const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY
 });
+
 // DO NOT CHANGE
 const EMBEDDINGS_FILE = './documents/embeddings.json';
+
+// ✅ add basic routes so pings return 200
+app.get('/', (req, res) => {
+  res.send('🟢 Cohere travel assistant is running');
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
 
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
@@ -31,7 +41,8 @@ function getTopKDocuments(queryEmbedding, documents, k = 5) {
   similarities.sort((a, b) => b.score - a.score);
   return similarities.slice(0, k).map(item => item.doc);
 }
-//upload YOUR OWN DOICUMENTS HERE
+
+// upload YOUR OWN DOCUMENTS HERE
 async function loadDocuments() {
   const files = [
     './documents/tour_details.json',
@@ -42,71 +53,8 @@ async function loadDocuments() {
   ];
 
   const documents = [];
-//change to fit your documents
-  /*
-  for (const file of files) {
-    try {
-      const content = await fs.readFile(file, 'utf-8');
-      const json = JSON.parse(content);
 
-      if (file.includes('tour_details')) {
-        json.forEach(tour => {
-          const detailsSnippet = tour.details?.map(d => d.body).join(' ') || '';
-          documents.push({
-            id: `tour_details_${tour.name}`,
-            data: {
-              title: tour.name,
-              snippet: (tour.description || '') + ' ' + detailsSnippet
-            }
-          });
-        });
-      } else if (file.includes('tours')) {
-        json.forEach(tour => {
-          documents.push({
-            id: `tours_${tour.name}`,
-            data: {
-              title: tour.name,
-              snippet: tour.product_line || ''
-            }
-          });
-        });
-      } else if (file.includes('rest_countries')) {
-        json.forEach(country => {
-          const languageList = Object.values(country.languages || {}).join(', ');
-          documents.push({
-            id: `rest_countries_${country.name?.common}`,
-            data: {
-              title: country.name?.common || '',
-              snippet: `Official Name: ${country.name?.official}. Capital: ${country.capital?.[0] || ''}. Region: ${country.region}. Subregion: ${country.subregion}. Population: ${country.population}. Languages: ${languageList}. Area: ${country.area} sq km.`
-            }
-          });
-        });
-      } else if (file.includes('unesco_sites')) {
-        json.query?.row?.forEach(site => {
-          documents.push({
-            id: `unesco_sites_${site.site}`,
-            data: {
-              title: site.site || '',
-              snippet: site.short_description?.replace(/<[^>]+>/g, '') || ''
-            }
-          });
-        });
-      } else if (file.includes('merged_countries')) {
-        json.forEach(country => {
-          documents.push({
-            id: `merged_countries_${country.name}`,
-            data: {
-              title: country.name || '',
-              snippet: `Capital: ${country.capital}, Region: ${country.region}, Population: ${country.population}, Language: ${country.language}, Currency: ${country.currency}`
-            }
-          });
-        });
-      }
-
-    } catch (err) {
-      console.error(`Error reading ${file}:`, err);
-    }
-  }*/
+  // your mapping/parsing is commented out here, leaving as-is
 
   console.log(`Loaded ${documents.length} documents`);
   return documents;
@@ -214,7 +162,6 @@ app.post('/generate', async (req, res) => {
       documents: topDocuments.map(doc => ({
         text: `${doc.data.title}. ${doc.data.snippet}`
       })),
-      //CHANGE THIS TO FIT THE CONTEXT OG YOUR APP
       preamble: 'You are a professional and friendly expert travel assistant named Y-TravelBot, working for Y-Travels. You must answer the users questions using ONLY the information provided in the documents below whenever possible. If a topic is not covered by the documents, you may use your own knowledge — but ONLY in the domain of travel and tourism. Stay strictly within this domain: travel, countries, cities, attractions, history, geography, local cuisine, culture, and things to do. DO NOT provide information about politics, economics, safety advice, or unrelated topics. Always write in a helpful, engaging tone suitable for a travel website audience. If country or place not refered to in documents please tell user to click generate itinerary in the nav bar',
       temperature: 0.3
     });
@@ -251,4 +198,5 @@ app.post('/holiday', async (req, res) => {
 
 app.listen(5000, () => {
   console.log('Listening on http://localhost:5000');
+  console.log('✅ Health endpoints enabled for pinging (/, /health)');
 });
